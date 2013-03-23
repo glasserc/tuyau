@@ -1,7 +1,12 @@
+import paramiko
+
 class Connection(object):
     """Class to represent a connection to another Tuyau instance."""
 
-    def __init__(self, application):
+    def __init__(self, remote):
+        pass
+
+    def hello(self, application):
         self.application = application
 
     def get_messages(self):
@@ -22,3 +27,7 @@ class DumbServer(Connection):
 
     def send_messages(self, msgs):
         pass
+
+class SmartServer(Connection):
+    """Class to represent a connection to another instance of Tuyau"""
+    pass

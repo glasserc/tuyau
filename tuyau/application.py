@@ -1,8 +1,18 @@
+import collections
+
 class Application(object):
     """Class for an instance of Tuyau"""
 
     def __init__(self, config):
-        self.name = 'laptop'
-        """Name for this instance to be referred to by other instances
+        self.config = config
+        self.name = config.name
+        self.outgoing = collections.deque()
 
-        Typically this is the name of the machine."""
+    def enqueue(self, message):
+        self.outgoing.append(message)
+
+    def sync(self):
+        pass
+
+    def fetch(self):
+        return []
