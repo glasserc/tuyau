@@ -9,6 +9,7 @@ class Message(object):
             uuid = uuid4()
         if isinstance(uuid, (str, unicode)):
             uuid = UUID(uuid)
+
         self.uuid = uuid
 
     def to_json(self):

@@ -5,14 +5,15 @@ from tuyau import application
 from tuyau.message import Message
 from tuyau.config import Remote, Configuration as Config
 from tuyau.conditions import Always
-from tuyau.actions import Log
+from tuyau.actions import LogWithLogging
 from . import TESTDIR
 
 def test_dumb_server_1(tmpdir):
+    log = LogWithLogging('tuyau.test_dumbserver')
     r = Remote('server', Remote.DUMB, url='ssh://localhost/{}'.format(tmpdir))
 
     c = Config({'laptop': [r], 'desktop': [r]},
-               {'desktop': [(Always(), Log())]})
+               {'desktop': [(Always(), log)]})
 
     a1 = application.Application('laptop', c)
     a2 = application.Application('desktop', c)
@@ -29,12 +30,13 @@ def test_dumb_server_2(tmpdir):
 
     # Four instances, all communicating by dropping messages on a
     # dumb server. Messages should go to some but not all.
+    log = LogWithLogging('tuyau.test_dumbserver')
     c = Config({'laptop': [r],
                  'desktop': [r],
                  'phone': [r],
                  'work_laptop': [r]},
-                {'desktop': [(Always(), Log())],
-                 'phone': [(Always(), Log())]})
+                {'desktop': [(Always(), log)],
+                 'phone': [(Always(), log)]})
 
     a1 = application.Application('laptop', c)
     a2 = application.Application('desktop', c)

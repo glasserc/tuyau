@@ -64,4 +64,10 @@ class Application(object):
         return self.incoming
 
     def process(self, messages):
-        pass
+        if self.name not in self.config.listeners:
+            return None
+        listeners = self.config.listeners[self.name]
+        for message in messages:
+            for (cond, action) in listeners:
+                if cond.match(message):
+                    action(message)
