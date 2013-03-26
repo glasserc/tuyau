@@ -10,8 +10,10 @@ class Remote(object):
     MAPPING = {DUMB: connection.DumbServer,
                TUYAU: connection.SmartServer}
 
-    def __init__(self, type):
+    def __init__(self, name, type, url=None):
+        self.name = name
         self.type = type
+        self.url = url
 
     def connect(self):
         conn = self.MAPPING[self.type](self)
@@ -26,4 +28,16 @@ class Configuration(object):
     Typically this is the name of the machine."""
 
     remotes = []
-    """Remotes to connect to"""
+    """Remotes to connect to from this instance"""
+
+    listeners = {}
+    """name -> [(condition, action)]
+
+    If a message matches any condition, send it to the remote named
+    "name". If we are "name" and a message matches a condition,
+    perform the corresponding action."""
+
+    def __init__(self, name=None, remotes=None, listeners=None):
+        self.name = name
+        self.remotes = remotes
+        self.listeners = listeners

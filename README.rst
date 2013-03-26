@@ -7,6 +7,13 @@ calendaring) what git does for source code (and personal config files,
 and org files, and bugs). That is: make sharing easy transparent,
 disconnected, and reliable.
 
+Of course, right now it's more of a proof-of-concept, a kind of
+offline message bus. You put a message on the bus, and the nodes that are interested in that message eventually get it.
+
+Each node in the graph has a set of remotes, where it looks for
+messages. It also has a bunch of listeners. Listeners control what
+messages it's interested in, and what to do with them. Among other things, "what to do" can mean sending other messages.
+
 Install
 =======
 

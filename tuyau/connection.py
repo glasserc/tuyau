@@ -16,11 +16,11 @@ class Connection(object):
     def hello(self, application):
         self.application = application
 
-    def get_messages(self):
+    def get_messages(self, name):
         """Gets messages for this instance"""
         raise NotImplementedError
 
-    def send_messages(self, msgs):
+    def send_messages(self, for_name, msgs):
         raise NotImplementedError
 
 class DumbServer(Connection):
@@ -56,18 +56,19 @@ class DumbServer(Connection):
         self.sshclient.close()
         self.pmconnection.close()
 
-    def get_messages(self):
+    def get_messages(self, name):
         incoming = []
         for filename in self.pmconnection.listdir('.'):
-            if filename.startswith('messages-'):
+            if filename.startswith('messages-{}-'.format(name)):
                 block = self.pmconnection.file(filename)
                 incoming.extend(json_wrapper.load(block))
                 block.close()
+                self.pmconnection.unlink(filename)
 
         return incoming
 
-    def send_messages(self, msgs):
-        blockname = 'messages-{}'.format(uuid.uuid4())
+    def send_messages(self, for_name, msgs):
+        blockname = 'messages-{}-{}'.format(for_name, uuid.uuid4())
         block = self.pmconnection.file(blockname, 'w')
         json_wrapper.dump(list(msgs), block)
         block.close()
