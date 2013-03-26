@@ -22,13 +22,17 @@ class Remote(object):
 class Configuration(object):
     """Configuration object for an instance of Tuyau"""
 
-    name = 'laptop'
-    """Name for this instance to be referred to by other instances
+    remotes = {}
+    """name -> [remotes]
 
-    Typically this is the name of the machine."""
+    Remotes that the instance named "name" can connect to.
 
-    remotes = []
-    """Remotes to connect to from this instance"""
+    Remotes can of course be instances themselves.
+
+    Sometimes different machines connect to the same Remote in
+    different ways -- different filesystem paths, or over SSH vs on a
+    local filesystem. In this case, it's only necessary that the
+    remotes have the same name."""
 
     listeners = {}
     """name -> [(condition, action)]
@@ -37,7 +41,6 @@ class Configuration(object):
     "name". If we are "name" and a message matches a condition,
     perform the corresponding action."""
 
-    def __init__(self, name=None, remotes=None, listeners=None):
-        self.name = name
+    def __init__(self, remotes=None, listeners=None):
         self.remotes = remotes
         self.listeners = listeners
