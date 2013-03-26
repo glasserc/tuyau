@@ -1,3 +1,5 @@
+from __future__ import print_function
+import sys
 from . import connection
 
 class Remote(object):
@@ -9,10 +11,11 @@ class Remote(object):
                TUYAU: connection.SmartServer}
 
     def __init__(self, type):
-        pass
+        self.type = type
 
     def connect(self):
-        return self.MAPPING[self.type](self)
+        conn = self.MAPPING[self.type](self)
+        return conn
 
 class Configuration(object):
     """Configuration object for an instance of Tuyau"""

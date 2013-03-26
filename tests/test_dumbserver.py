@@ -10,7 +10,7 @@ TESTNAME = 'dumb_server'
 
 def test_dumb_server_1(tmpdir):
     r = Remote(Remote.DUMB)
-    r.address = 'ssh://localhost/{}/{}'.format(TESTDIR, tmpdir)
+    r.url = 'ssh://localhost/{}'.format(tmpdir)
 
     c1 = Config()
     c1.name = 'laptop'
@@ -24,6 +24,7 @@ def test_dumb_server_1(tmpdir):
     a2 = application.Application(c2)
 
     m1 = Message()
+    m1.x = 3
     a1.enqueue(m1)
     a1.sync()
 
