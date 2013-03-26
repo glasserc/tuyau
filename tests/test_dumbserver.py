@@ -19,7 +19,6 @@ def test_dumb_server_1(tmpdir):
     a2 = application.Application(c2)
 
     m1 = Message()
-    m1.x = 3
     a1.enqueue(m1)
     a1.sync()
 
@@ -46,7 +45,6 @@ def test_dumb_server_2(tmpdir):
 
 
     m1 = Message()
-    m1.x = 3
     a1.enqueue(m1)
     a1.sync()
 

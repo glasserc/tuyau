@@ -1,24 +1,27 @@
 import json_wrapper
+from uuid import uuid4, UUID
 
 @json_wrapper.JSONDecoder.register_type
 class Message(object):
     """Class representing a message"""
-    def __init__(self, *args, **kwargs):
-        pass
+    def __init__(self, uuid=None):
+        if not uuid:
+            uuid = uuid4()
+        if isinstance(uuid, (str, unicode)):
+            uuid = UUID(uuid)
+        self.uuid = uuid
 
     def to_json(self):
         cpy = self.__dict__.copy()
         cpy['type'] = 'Message'
+        cpy['uuid'] = str(self.uuid)
         return cpy
 
     @classmethod
     def from_json(cls, o):
-        self = cls()
-        # This is kind of hacky, only necessary because I don't have
-        # any real message types yet
-        for k, v in o.iteritems():
-            setattr(self, k, v)
+        o.pop('type')
+        self = cls(**o)
         return self
 
-    def __cmp__(self, rhs):
-        return type(self) == type(rhs) and self.__dict__ == rhs.__dict__
+    def __eq__(self, rhs):
+        return self.uuid == rhs.uuid

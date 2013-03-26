@@ -30,7 +30,6 @@ class Application(object):
             connection.hello(self)
             connections.append(connection)
 
-        print(connections, file=sys.stderr)
         for connection in connections:
             incoming = connection.get_messages(self.name)
             self.process(incoming)
