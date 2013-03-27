@@ -3,7 +3,7 @@
 import os.path
 from mock import Mock
 from tuyau import application
-from tuyau.message import Message
+from tuyau.message import Document
 from tuyau.config import Remote, Configuration as Config
 from tuyau.conditions import Always
 from tuyau.actions import LogWithLogging
@@ -16,9 +16,9 @@ def test_always_log(tmpdir):
     c = Config({'laptop': [r], 'desktop': [r]},
                {'desktop': [(Always(), log)]})
 
-    a1 = application.Application('desktop', c)
+    a1 = application.Application('desktop', 'http://localhost:5984/tuyau', c)
 
-    m1 = Message()
+    m1 = Document()
     a1.process([m1])
 
     log.assert_called_with(m1)

@@ -3,7 +3,7 @@ import sys
 import time
 import uuid
 import os.path
-from . import json_wrapper
+import json
 import paramiko
 import urlparse
 
@@ -11,7 +11,7 @@ class Connection(object):
     """Class to represent a connection to another Tuyau instance."""
 
     def __init__(self, remote):
-        pass
+        self.remote = remote
 
     def hello(self, application):
         self.application = application
@@ -61,7 +61,7 @@ class DumbServer(Connection):
         for filename in self.pmconnection.listdir('.'):
             if filename.startswith('messages-{}-'.format(name)):
                 block = self.pmconnection.file(filename)
-                incoming.extend(json_wrapper.load(block))
+                incoming.extend(json.load(block))
                 block.close()
                 self.pmconnection.unlink(filename)
 
@@ -70,7 +70,7 @@ class DumbServer(Connection):
     def send_messages(self, for_name, msgs):
         blockname = 'messages-{}-{}'.format(for_name, uuid.uuid4())
         block = self.pmconnection.file(blockname, 'w')
-        json_wrapper.dump(list(msgs), block)
+        json.dump(list(msgs), block)
         block.close()
 
 class SmartServer(Connection):
