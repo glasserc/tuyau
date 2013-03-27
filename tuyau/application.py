@@ -28,13 +28,13 @@ class Application(object):
         self.syncinfo_sent = {}
         """Remote -> {machine -> last_seq sent on that remote}
 
-        Helps us from resending same messages on the same remote"""
+        Helps us from resending same documents on the same remote"""
         self.incoming = []
 
-    def enqueue(self, message):
+    def save(self, document):
         if not self.couch:
-            raise ValueError, "Cannot send a message on a non-couch instance"
-        message.store(self.couch)
+            raise ValueError, "Cannot send a document on a non-couch instance"
+        document.store(self.couch)
 
     def sync(self):
         connections = []
@@ -44,14 +44,14 @@ class Application(object):
             connections.append(connection)
 
         for connection in connections:
-            incoming = connection.get_messages(self.name)
+            incoming = connection.get_documents(self.name)
             self.process(incoming)
 
         for connection in connections:
             for machine in self.config.listeners.iterkeys():
-                messages = self.changes_for(connection.remote, machine)
-                if messages:
-                    connection.send_messages(machine, messages)
+                documents = self.changes_for(connection.remote, machine)
+                if documents:
+                    connection.send_documents(machine, documents)
             connection.close()
 
     def changes_for(self, remote, machine):
@@ -69,20 +69,20 @@ class Application(object):
         return docs
 
     def fetch(self):
-        """Get, but don't process, messages from all connections"""
+        """Get, but don't process, documents from all connections"""
         incoming = {}
         for remote in self.config.remotes[self.name]:
             connection = remote.connect()
             connection.hello(self)
-            self.incoming.extend(connection.get_messages(self.name))
+            self.incoming.extend(connection.get_documents(self.name))
 
         return self.incoming
 
-    def process(self, messages):
+    def process(self, documents):
         if self.name not in self.config.listeners:
             return None
         listeners = self.config.listeners[self.name]
-        for message in messages:
+        for document in documents:
             for (cond, action) in listeners:
-                if cond.match(message):
-                    action(message)
+                if cond.match(document):
+                    action(document)

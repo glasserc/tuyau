@@ -16,18 +16,18 @@ class Connection(object):
     def hello(self, application):
         self.application = application
 
-    def get_messages(self, name):
-        """Gets messages for this instance"""
+    def get_documents(self, name):
+        """Gets documents for this instance"""
         raise NotImplementedError
 
-    def send_messages(self, for_name, msgs):
+    def send_documents(self, for_name, msgs):
         raise NotImplementedError
 
 class DumbServer(Connection):
     """Class to represent a connection to a server not running tuyau locally
 
     Communication with a DumbServer is typically done by dropping
-    blocks of messages in a file in a directory via SSH.
+    blocks of documents in a file in a directory via SSH.
     """
     def __init__(self, remote):
         super(DumbServer, self).__init__(remote)
@@ -56,10 +56,10 @@ class DumbServer(Connection):
         self.sshclient.close()
         self.pmconnection.close()
 
-    def get_messages(self, name):
+    def get_documents(self, name):
         incoming = []
         for filename in self.pmconnection.listdir('.'):
-            if filename.startswith('messages-{}-'.format(name)):
+            if filename.startswith('documents-{}-'.format(name)):
                 block = self.pmconnection.file(filename)
                 incoming.extend(json.load(block))
                 block.close()
@@ -67,8 +67,8 @@ class DumbServer(Connection):
 
         return incoming
 
-    def send_messages(self, for_name, msgs):
-        blockname = 'messages-{}-{}'.format(for_name, uuid.uuid4())
+    def send_documents(self, for_name, msgs):
+        blockname = 'documents-{}-{}'.format(for_name, uuid.uuid4())
         block = self.pmconnection.file(blockname, 'w')
         json.dump(list(msgs), block)
         block.close()

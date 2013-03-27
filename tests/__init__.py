@@ -1,7 +1,7 @@
 """Tests for Tuyau"""
 
 import os.path
-from tuyau.message import Document
+from tuyau.document import Document
 
 TESTDIR = os.path.dirname(__file__)
 

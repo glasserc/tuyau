@@ -3,7 +3,7 @@
 import os.path
 from mock import Mock
 from tuyau import application
-from tuyau.message import Document
+from tuyau.document import Document
 from tuyau.config import Remote, Configuration as Config
 from tuyau.conditions import Always
 from tuyau.actions import LogWithLogging

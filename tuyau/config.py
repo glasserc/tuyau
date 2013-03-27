@@ -3,7 +3,7 @@ import sys
 from . import connection
 
 class Remote(object):
-    """Configuration object representing places to exchange messages with"""
+    """Configuration object representing places to exchange documents with"""
 
     DUMB = 'dumb'
     TUYAU = 'tuyau'
@@ -37,8 +37,8 @@ class Configuration(object):
     listeners = {}
     """name -> [(condition, action)]
 
-    If a message matches any condition, send it to the remote named
-    "name". If we are "name" and a message matches a condition,
+    If a document matches any condition, send it to the remote named
+    "name". If we are "name" and a document matches a condition,
     perform the corresponding action."""
 
     def __init__(self, remotes=None, listeners=None):

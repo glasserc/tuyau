@@ -8,12 +8,13 @@ and org files, and bugs). That is: make sharing easy, transparent,
 disconnected, and reliable.
 
 Of course, right now it's more of a proof-of-concept, a kind of
-offline message bus. You put a message on the bus, and the nodes that are interested in that message eventually get it.
+offline message bus. You put a document on the bus, and the nodes that
+are interested in that document eventually get it.
 
 Each node in the graph has a set of remotes, where it looks for
-messages. It also has a bunch of listeners. Listeners control what
-messages it's interested in, and what to do with them. Among other
-things, "what to do" can mean sending other messages.
+documents. It also has a bunch of listeners. Listeners control what
+documents it's interested in, and what to do with them. Among other
+things, "what to do" can mean sending other documents.
 
 Tuyau is implemented as a layer over CouchDB. Eventually, all data
 should be in CouchDB and applications should be taught to use Couch as
