@@ -24,9 +24,15 @@ class CouchFixture(object):
             num = parse_num(dbname)
             if num is not None:
                 maxnum = max(maxnum, num)
-        dbname = prefix+str(maxnum+1)
-        db = server.create(dbname)
-        return dbname
+        ret_dbname = prefix+str(maxnum+1)
+        ret_db = server.create(ret_dbname)
+
+        for dbname in server:
+            num = parse_num(dbname)
+            if num is not None and num <= (maxnum - keep):
+                server.delete(dbname)
+
+        return ret_dbname
 
     def finish(self):
         pass
