@@ -65,7 +65,11 @@ class Application(object):
         docs = []
         for change in changes['results']:
             id = change['id']
-            docs.append(self.couch.get(id, attachments=True, revs=True))
+            doc = self.couch.get(id, attachments=True, revs=True)
+            for cond, action in self.config.listeners[machine]:
+                if cond.match(doc):
+                    docs.append(doc)
+                    break
         return docs
 
     def fetch(self):
