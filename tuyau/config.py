@@ -1,6 +1,8 @@
 from __future__ import print_function
 import sys
 from . import connection
+from .conditions import Condition
+from .actions import Action
 
 class Remote(object):
     """Configuration object representing places to exchange documents with"""
@@ -18,6 +20,9 @@ class Remote(object):
     def connect(self):
         conn = self.MAPPING[self.type](self)
         return conn
+
+    def to_json(self):
+        return self.__dict__
 
 class Configuration(object):
     """Configuration object for an instance of Tuyau"""
@@ -43,6 +48,21 @@ class Configuration(object):
         named "name". If we are "name" and a document matches a
         condition, perform the corresponding action."""
 
+    @classmethod
+    def from_json(cls, doc):
+        remotes = [Remote(**remote) for remote in doc['remotes']]
+        listeners = []
+        for (cond, act) in doc['listeners']:
+            cond = Condition.from_json(cond)
+            act = Action.from_json(act)
+            listeners.append((cond, act))
+
+        return cls(remotes=remotes, listeners=listeners)
+
+    def to_json(self):
+        return {'remotes': [r.to_json() for r in self.remotes],
+                'listeners': [(c.to_json(), a.to_json())
+                              for (c, a) in self.listeners]}
 
 class GlobalConfig(object):
 
@@ -57,3 +77,7 @@ class GlobalConfig(object):
 
     def iterkeys(self):
         return self.instances.iterkeys()
+
+    def to_json(self):
+        return {'remotes': [r.to_json() for r in self.remotes],
+                'nodes': self.instances.keys()}

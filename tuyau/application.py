@@ -4,6 +4,8 @@ import collections
 import couchdb
 import urlparse
 
+from tuyau.config import Remote, GlobalConfig, Configuration
+
 # To debug paramiko
 import logging
 logger = logging.getLogger()
@@ -25,14 +27,41 @@ class Application(object):
             no_path = (parsed.scheme, parsed.netloc, '', '', '')
             couch = couchdb.Server(urlparse.urlunsplit(no_path))
             self.couch = couch[parsed.path.strip('/')]
+
+        if not global_config:
+            self.load_config()
         self.syncinfo_sent = {}
         """Remote -> {machine -> last_seq sent on that remote}
 
         Helps us from resending same documents on the same remote"""
         self.incoming = []
 
-    def configuration(self, configuration):
-        pass
+    def load_config(self):
+        gc_doc = self.couch.get('design/tuyau-global', None)
+        if not gc_doc:
+            return   # hope that someone configures us soon
+
+        global_remotes = []
+        for remote in gc_doc['remotes']:
+            global_remotes.append(Remote(**remote))
+
+        instance_map = {}
+        for instance in gc_doc['nodes']:
+            instance_doc = self.couch.get('design/tuyau-{}'.format(instance), None)
+            if not instance_doc:
+                continue   # I guess??
+            instance_map[instance] = Configuration.from_json(instance_doc)
+
+        self.global_config = GlobalConfig(global_remotes=global_remotes,
+                                          **instance_map)
+
+    def save_config(self, global_config):
+        self.global_config = global_config
+        for instance in global_config.iterkeys():
+            idict = global_config[instance].to_json()
+            self.couch['design/tuyau-{}'.format(instance)] = idict
+
+        self.couch['design/tuyau-global'] = global_config.to_json()
 
     def save(self, document):
         if not self.couch:
@@ -40,6 +69,8 @@ class Application(object):
         document.store(self.couch)
 
     def remotes(self):
+        if not self.global_config:
+            raise ValueError, "unconfigured instance"
         global_remotes = self.global_config.remotes
         local_remotes = self.global_config[self.name].remotes
         return global_remotes + local_remotes

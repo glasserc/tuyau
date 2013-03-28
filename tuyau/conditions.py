@@ -3,8 +3,12 @@ Conditions to be used in listeners lists
 """
 
 import json
+from tuyau.registry import TypeRegistry
 
-class Condition(object):
+class Condition(TypeRegistry):
+    # For TypeRegistry
+    CLASSES = {}
+
     def match(self, document):
         return False
 
@@ -15,6 +19,7 @@ class Condition(object):
         return ""
 
 
+@Condition.register_class
 class Always(Condition):
     def match(self, document):
         return True
@@ -22,6 +27,7 @@ class Always(Condition):
     def to_javascript(self):
         return "true"
 
+@Condition.register_class
 class Filter(Condition):
     def __init__(self, **kwargs):
         self.attributes = kwargs
