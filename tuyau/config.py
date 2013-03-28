@@ -50,6 +50,7 @@ class Configuration(object):
 
     @classmethod
     def from_json(cls, doc):
+        doc.pop('type')
         remotes = [Remote(**remote) for remote in doc['remotes']]
         listeners = []
         for (cond, act) in doc['listeners']:
@@ -62,7 +63,8 @@ class Configuration(object):
     def to_json(self):
         return {'remotes': [r.to_json() for r in self.remotes],
                 'listeners': [(c.to_json(), a.to_json())
-                              for (c, a) in self.listeners]}
+                              for (c, a) in self.listeners],
+                'type': 'Config'}
 
 class GlobalConfig(object):
 
@@ -80,4 +82,5 @@ class GlobalConfig(object):
 
     def to_json(self):
         return {'remotes': [r.to_json() for r in self.remotes],
-                'nodes': self.instances.keys()}
+                'nodes': self.instances.keys(),
+                'type': 'Config'}
