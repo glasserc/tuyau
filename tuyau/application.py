@@ -37,7 +37,7 @@ class Application(object):
         self.incoming = []
 
     def load_config(self):
-        gc_doc = self.couch.get('design/tuyau-global', None)
+        gc_doc = self.couch.get('_design/tuyau-global', None)
         if not gc_doc:
             return   # hope that someone configures us soon
 
@@ -47,7 +47,7 @@ class Application(object):
 
         instance_map = {}
         for instance in gc_doc['nodes']:
-            instance_doc = self.couch.get('design/tuyau-{}'.format(instance), None)
+            instance_doc = self.couch.get('_design/tuyau-{}'.format(instance), None)
             if not instance_doc:
                 continue   # I guess??
             instance_map[instance] = Configuration.from_json(instance_doc)
@@ -59,9 +59,9 @@ class Application(object):
         self.global_config = global_config
         for instance in global_config.iterkeys():
             idict = global_config[instance].to_json()
-            self.couch['design/tuyau-{}'.format(instance)] = idict
+            self.couch['_design/tuyau-{}'.format(instance)] = idict
 
-        self.couch['design/tuyau-global'] = global_config.to_json()
+        self.couch['_design/tuyau-global'] = global_config.to_json()
 
     def save(self, document):
         if not self.couch:
@@ -94,7 +94,8 @@ class Application(object):
             connection.close()
 
     def changes_for(self, remote, machine):
-        changes_args = dict(style='all_docs')
+        changes_args = dict(style='all_docs',
+                            filter='tuyau-{}/interested'.format(machine))
         last_sent_dict = self.syncinfo_sent.setdefault(remote, {})
         last_sent = last_sent_dict.get(machine, None)
         if last_sent:
@@ -105,10 +106,7 @@ class Application(object):
         for change in changes['results']:
             id = change['id']
             doc = self.couch.get(id, attachments=True, revs=True)
-            for cond, action in self.global_config[machine].listeners:
-                if cond.match(doc):
-                    docs.append(doc)
-                    break
+            docs.append(doc)
         return docs
 
     def fetch(self):

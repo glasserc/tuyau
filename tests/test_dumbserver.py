@@ -6,7 +6,7 @@ from tuyau.document import Document
 from tuyau.config import Remote, Configuration as Config, GlobalConfig
 from tuyau.conditions import Always, Filter
 from tuyau.actions import LogWithLogging
-from . import DocumentFuzzy
+from . import DocumentFuzzy, DocumentFuzzy as DF
 
 def test_dumb_server_1(couchurl, tmpdir):
     log = LogWithLogging('tuyau.test_dumbserver')
@@ -16,7 +16,8 @@ def test_dumb_server_1(couchurl, tmpdir):
                      laptop=Config(),
                      desktop=Config([(Always(), log)]))
 
-    a1 = application.Application('laptop', couchurl, c)
+    a1 = application.Application('laptop', couchurl)
+    a1.save_config(c)
     a2 = application.Application('desktop', None, c)
 
     m1 = Document()
@@ -24,7 +25,9 @@ def test_dumb_server_1(couchurl, tmpdir):
     a1.sync()
 
     documents = a2.fetch()
-    assert DocumentFuzzy.wrap_all(documents) == [m1]
+    no_config = DF.strip_configs(documents)
+    assert no_config == [m1]
+    assert len(documents) > len(no_config)
 
 def test_dumb_server_2(couchurl, tmpdir):
     r = Remote('server', Remote.DUMB, url='ssh://localhost/{}'.format(tmpdir))
@@ -38,7 +41,8 @@ def test_dumb_server_2(couchurl, tmpdir):
                      phone=Config([(Always(), log)]),
                      work_laptop=Config([(Filter(type='mail'), log)]))
 
-    a1 = application.Application('laptop', couchurl, c)
+    a1 = application.Application('laptop', couchurl)
+    a1.save_config(c)
     a2 = application.Application('desktop', None, c)
     a3 = application.Application('phone', None, c)
     a4 = application.Application('work_laptop', None, c)
@@ -49,10 +53,16 @@ def test_dumb_server_2(couchurl, tmpdir):
     a1.sync()
 
     documents = a2.fetch()
-    assert DocumentFuzzy.wrap_all(documents) == [m1]
+    configs2 = DF.only_configs(documents)
+    assert DF.strip_configs(documents) == [m1]
 
     documents = a3.fetch()
-    assert DocumentFuzzy.wrap_all(documents) == [m1]
+    configs3 = DF.only_configs(documents)
+    assert DF.strip_configs(documents) == [m1]
 
     documents = a4.fetch()
-    assert documents == []
+    configs4 = DF.only_configs(documents)
+    assert DF.strip_configs(documents) == []
+
+    assert configs2 == configs3
+    assert configs3 == configs4
