@@ -22,25 +22,38 @@ class Remote(object):
 class Configuration(object):
     """Configuration object for an instance of Tuyau"""
 
-    remotes = {}
-    """name -> [remotes]
+    def __init__(self, listeners=None, remotes=None):
+        self.remotes = remotes or []
+        """[remotes]
 
-    Remotes that the instance named "name" can connect to.
+        Remotes specific to the instance named "name".
 
-    Remotes can of course be instances themselves.
+        Remotes can of course be instances themselves.
 
-    Sometimes different machines connect to the same Remote in
-    different ways -- different filesystem paths, or over SSH vs on a
-    local filesystem. In this case, it's only necessary that the
-    remotes have the same name."""
+        Sometimes different machines connect to the same Remote in
+        different ways -- different filesystem paths, or over SSH vs
+        on a local filesystem. In this case, it's only necessary that
+        the remotes have the same name."""
 
-    listeners = {}
-    """name -> [(condition, action)]
 
-    If a document matches any condition, send it to the remote named
-    "name". If we are "name" and a document matches a condition,
-    perform the corresponding action."""
+        self.listeners = listeners or []
+        """[(condition, action)]
 
-    def __init__(self, remotes=None, listeners=None):
-        self.remotes = remotes
-        self.listeners = listeners
+        If a document matches any condition, send it to the remote
+        named "name". If we are "name" and a document matches a
+        condition, perform the corresponding action."""
+
+
+class GlobalConfig(object):
+
+    def __init__(self, global_remotes=None, **instances):
+        self.remotes = global_remotes or []
+        """Global remotes"""
+
+        self.instances = instances
+
+    def __getitem__(self, item):
+        return self.instances[item]
+
+    def iterkeys(self):
+        return self.instances.iterkeys()

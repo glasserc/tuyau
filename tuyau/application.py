@@ -13,12 +13,12 @@ logger.addHandler(logging.StreamHandler())
 class Application(object):
     """Class for an instance of Tuyau"""
 
-    def __init__(self, name, couchurl, config=None):
+    def __init__(self, name, couchurl, global_config=None):
         """couchdb is the URL of the Couch DB specific to this instance.
 
-        One of couchurl and config must be specified."""
+        One of couchurl and global_config must be specified."""
         self.name = name
-        self.config = config
+        self.global_config = global_config
         self.couch = None
         if couchurl:
             parsed = urlparse.urlsplit(couchurl)
@@ -31,14 +31,22 @@ class Application(object):
         Helps us from resending same documents on the same remote"""
         self.incoming = []
 
+    def configuration(self, configuration):
+        pass
+
     def save(self, document):
         if not self.couch:
             raise ValueError, "Cannot send a document on a non-couch instance"
         document.store(self.couch)
 
+    def remotes(self):
+        global_remotes = self.global_config.remotes
+        local_remotes = self.global_config[self.name].remotes
+        return global_remotes + local_remotes
+
     def sync(self):
         connections = []
-        for remote in self.config.remotes[self.name]:
+        for remote in self.remotes():
             connection = remote.connect()
             connection.hello(self)
             connections.append(connection)
@@ -48,7 +56,7 @@ class Application(object):
             self.process(incoming)
 
         for connection in connections:
-            for machine in self.config.listeners.iterkeys():
+            for machine in self.global_config.iterkeys():
                 documents = self.changes_for(connection.remote, machine)
                 if documents:
                     connection.send_documents(machine, documents)
@@ -66,7 +74,7 @@ class Application(object):
         for change in changes['results']:
             id = change['id']
             doc = self.couch.get(id, attachments=True, revs=True)
-            for cond, action in self.config.listeners[machine]:
+            for cond, action in self.global_config[machine].listeners:
                 if cond.match(doc):
                     docs.append(doc)
                     break
@@ -75,7 +83,7 @@ class Application(object):
     def fetch(self):
         """Get, but don't process, documents from all connections"""
         incoming = {}
-        for remote in self.config.remotes[self.name]:
+        for remote in self.remotes():
             connection = remote.connect()
             connection.hello(self)
             self.incoming.extend(connection.get_documents(self.name))
@@ -83,9 +91,9 @@ class Application(object):
         return self.incoming
 
     def process(self, documents):
-        if self.name not in self.config.listeners:
+        listeners = self.global_config[self.name].listeners
+        if not listeners:
             return None
-        listeners = self.config.listeners[self.name]
         for document in documents:
             for (cond, action) in listeners:
                 if cond.match(document):

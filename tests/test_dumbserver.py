@@ -3,7 +3,7 @@
 import os.path
 from tuyau import application
 from tuyau.document import Document
-from tuyau.config import Remote, Configuration as Config
+from tuyau.config import Remote, Configuration as Config, GlobalConfig
 from tuyau.conditions import Always, Filter
 from tuyau.actions import LogWithLogging
 from . import DocumentFuzzy
@@ -12,8 +12,9 @@ def test_dumb_server_1(couchurl, tmpdir):
     log = LogWithLogging('tuyau.test_dumbserver')
     r = Remote('server', Remote.DUMB, url='ssh://localhost/{}'.format(tmpdir))
 
-    c = Config({'laptop': [r], 'desktop': [r]},
-               {'desktop': [(Always(), log)]})
+    c = GlobalConfig(global_remotes=[r],
+                     laptop=Config(),
+                     desktop=Config([(Always(), log)]))
 
     a1 = application.Application('laptop', couchurl, c)
     a2 = application.Application('desktop', None, c)
@@ -31,13 +32,11 @@ def test_dumb_server_2(couchurl, tmpdir):
     # Four instances, all communicating by dropping documents on a
     # dumb server. Documents should go to some but not all.
     log = LogWithLogging('tuyau.test_dumbserver')
-    c = Config({'laptop': [r],
-                 'desktop': [r],
-                 'phone': [r],
-                 'work_laptop': [r]},
-                {'desktop': [(Always(), log)],
-                 'phone': [(Always(), log)],
-                 'work_laptop': [(Filter(type='mail'), log)]})
+    c = GlobalConfig(global_remotes=[r],
+                     laptop=Config(),
+                     desktop=Config([(Always(), log)]),
+                     phone=Config([(Always(), log)]),
+                     work_laptop=Config([(Filter(type='mail'), log)]))
 
     a1 = application.Application('laptop', couchurl, c)
     a2 = application.Application('desktop', None, c)
