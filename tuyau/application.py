@@ -30,11 +30,9 @@ class Application(object):
 
         if not global_config:
             self.load_config()
-        self.syncinfo_sent = {}
-        """Remote -> {machine -> last_seq sent on that remote}
 
-        Helps us from resending same documents on the same remote"""
         self.incoming = []
+
 
     def load_config(self):
         gc_doc = self.couch.get('_design/tuyau-global', None)
@@ -54,6 +52,7 @@ class Application(object):
 
         self.global_config = GlobalConfig(global_remotes=global_remotes,
                                           **instance_map)
+
 
     def save_config(self, global_config):
         self.global_config = global_config
@@ -96,12 +95,16 @@ class Application(object):
     def changes_for(self, remote, machine):
         changes_args = dict(style='all_docs',
                             filter='tuyau-{}/interested'.format(machine))
-        last_sent_dict = self.syncinfo_sent.setdefault(remote, {})
-        last_sent = last_sent_dict.get(machine, None)
+        last_sent_key = '_local/tuyau-sync-{}'.format(machine)
+        if last_sent_key not in self.couch:
+            self.couch[last_sent_key] = {}
+        last_sent_dict = self.couch[last_sent_key]
+        last_sent = last_sent_dict.get(remote.name, None)
         if last_sent:
             changes_args['since'] = last_sent
         changes = self.couch.changes(**changes_args)
-        self.syncinfo_sent[remote][machine] = changes['last_seq']
+        last_sent_dict[remote.name] = changes['last_seq']
+        self.couch[last_sent_key] = last_sent_dict
         docs = []
         for change in changes['results']:
             id = change['id']
