@@ -66,3 +66,54 @@ def test_dumb_server_2(couchurl, tmpdir):
 
     assert configs2 == configs3
     assert configs3 == configs4
+
+def test_many_sync(couchurl, tmpdir):
+    r = Remote('server', Remote.DUMB, url='ssh://localhost/{}'.format(tmpdir))
+
+    # Four instances, all communicating by dropping documents on a
+    # dumb server. Documents should go to some but not all.
+    log = LogWithLogging('tuyau.test_dumbserver')
+    c = GlobalConfig(global_remotes=[r],
+                     laptop=Config(),
+                     desktop=Config([(Always(), log)]))
+
+    a1 = application.Application('laptop', couchurl)
+    a1.save_config(c)
+    m1 = Document()
+    a1.save(m1)
+    a1.sync()
+
+    a2 = application.Application('laptop', couchurl)
+    m2 = Document()
+    a2.save(m2)
+    a2.sync()
+
+    desktop = application.Application('desktop', couchurl)
+    documents = desktop.fetch()
+    assert DF.strip_configs(documents) == [m1, m2]
+
+
+def test_shared_sync(couchurl, tmpdir):
+    r = Remote('server', Remote.DUMB, url='ssh://localhost/{}'.format(tmpdir))
+
+    # Four instances, all communicating by dropping documents on a
+    # dumb server. Documents should go to some but not all.
+    log = LogWithLogging('tuyau.test_dumbserver')
+    c = GlobalConfig(global_remotes=[r],
+                     laptop=Config(),
+                     desktop=Config([(Always(), log)]))
+
+    a1 = application.Application('laptop', couchurl)
+    a1.save_config(c)
+    m1 = Document()
+    a1.save(m1)
+    # a1 doesn't sync; a2 will sync both
+
+    a2 = application.Application('laptop', couchurl)
+    m2 = Document()
+    a2.save(m2)
+    a2.sync()
+
+    desktop = application.Application('desktop', couchurl)
+    documents = desktop.fetch()
+    assert DF.strip_configs(documents) == [m1, m2]

@@ -10,7 +10,7 @@ class CouchFixture(object):
         return self.make_numbered_db('pytest-', server)
 
 
-    def make_numbered_db(self, prefix, server, keep=3):
+    def make_numbered_db(self, prefix, server, keep=10):
         def parse_num(dbname):
             """Parse the number out of a DB name"""
             if dbname.startswith(prefix):

@@ -22,7 +22,7 @@ def test_always_log(tmpdir):
 
 def test_save_maildir(couchurl, tmpdir):
     c = GlobalConfig(desktop=Config([(Always(), SaveToMaildir(str(tmpdir)))]))
-    a1 = application.Application('desktop', 'http://localhost:5984/tuyau', c)
+    a1 = application.Application('desktop', couchurl, c)
 
     m1 = Document()
     folder = tmpdir.mkdir('INBOX')
