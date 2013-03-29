@@ -50,7 +50,7 @@ class SaveToMaildir(Action):
 
     def __call__(self, doc, couchdb):
         # Verify that we have everything we need
-        if not (doc.folder and doc.filename and doc.content):
+        if not (doc.folder and doc.filename):
             return
 
         # Filename without any info/flags
@@ -78,5 +78,8 @@ class SaveToMaildir(Action):
             os.rename(old_file, new_filename)
         else:
             fp = file(new_filename, 'w')
-            fp.write(doc.content)
+            content = couchdb.get_attachment(doc, 'content')
+            print(content)
+            txt = content.read()
+            fp.write(txt)
             fp.close()

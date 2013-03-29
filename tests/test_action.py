@@ -30,17 +30,21 @@ def test_save_maildir(couchurl, tmpdir):
     folder.mkdir('new')
     m1.folder = 'INBOX'
     m1.filename = '01'
-    m1.content = """From: test@test.local
+    a1.save(m1)
+
+    CONTENT = """From: test@test.local
 Subject: Test message
 
 This is my test.
 
 """
+
+    a1.couch.put_attachment(m1, CONTENT, 'content')
     a1.process([m1])
 
     no_flags = tmpdir.join('INBOX/new/01')
     assert no_flags.check()
-    assert file(str(no_flags)).read() == m1.content
+    assert file(str(no_flags)).read() == CONTENT
 
     m1.filename = '01:2,RS'
     a1.process([m1])
@@ -48,7 +52,7 @@ This is my test.
     assert not no_flags.check()
     flags = tmpdir.join('INBOX/cur/01:2,RS')
     assert flags.check()
-    assert file(str(flags)).read() == m1.content
+    assert file(str(flags)).read() == CONTENT
 
     m1.filename = '01'
     a1.process([m1])
