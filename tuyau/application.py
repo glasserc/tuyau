@@ -126,4 +126,4 @@ class Application(object):
         for document in documents:
             for (cond, action) in listeners:
                 if cond.match(document):
-                    action(document)
+                    action(document, self.couch)

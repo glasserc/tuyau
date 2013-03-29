@@ -18,16 +18,18 @@ def test_always_log(tmpdir):
     m1 = Document()
     a1.process([m1])
 
-    log.assert_called_with(m1)
+    log.assert_called_with(m1, a1.couch)
 
 def test_save_maildir(couchurl, tmpdir):
     c = GlobalConfig(desktop=Config([(Always(), SaveToMaildir(str(tmpdir)))]))
     a1 = application.Application('desktop', 'http://localhost:5984/tuyau', c)
 
     m1 = Document()
-    tmpdir.mkdir('INBOX').mkdir('cur')
+    folder = tmpdir.mkdir('INBOX')
+    folder.mkdir('cur')
+    folder.mkdir('new')
     m1.folder = 'INBOX'
-    m1.filename = '01:2,'
+    m1.filename = '01'
     m1.content = """From: test@test.local
 Subject: Test message
 
@@ -36,6 +38,20 @@ This is my test.
 """
     a1.process([m1])
 
-    created = tmpdir.join('INBOX/cur/01:2,')
-    assert created.check()
-    assert file(str(created)).read() == m1.content
+    no_flags = tmpdir.join('INBOX/new/01')
+    assert no_flags.check()
+    assert file(str(no_flags)).read() == m1.content
+
+    m1.filename = '01:2,RS'
+    a1.process([m1])
+
+    assert not no_flags.check()
+    flags = tmpdir.join('INBOX/cur/01:2,RS')
+    assert flags.check()
+    assert file(str(flags)).read() == m1.content
+
+    m1.filename = '01'
+    a1.process([m1])
+
+    assert no_flags.check()
+    assert not flags.check()
