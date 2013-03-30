@@ -1,5 +1,5 @@
 
-from tuyau.application import Application
+from . import TestApplication as Application
 from tuyau.config import Remote, Configuration, GlobalConfig
 from tuyau.actions import LogWithLogging
 from tuyau.conditions import Always

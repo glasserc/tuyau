@@ -60,9 +60,14 @@ class DumbServer(Connection):
         incoming = []
         for filename in self.pmconnection.listdir('.'):
             if filename.startswith('documents-{}-'.format(name)):
-                block = self.pmconnection.file(filename)
-                incoming.extend(json.load(block))
-                block.close()
+                lfile = self.pmconnection.file(filename)
+                if self.application.gpg:
+                    decrypted = self.application.gpg.decrypt_file(lfile)
+                    block = json.loads(decrypted.data)
+                else:
+                    block = json.load(lfile)
+                incoming.extend(block)
+                lfile.close()
                 self.pmconnection.unlink(filename)
 
         return incoming
@@ -70,7 +75,15 @@ class DumbServer(Connection):
     def send_documents(self, for_name, msgs):
         blockname = 'documents-{}-{}'.format(for_name, uuid.uuid4())
         block = self.pmconnection.file(blockname, 'w')
-        json.dump(list(msgs), block)
+
+        if self.application.gpg:
+            keyid = self.application.global_config[for_name].key_id
+            encrypted = self.application.gpg.encrypt(json.dumps(list(msgs)),
+                                                     keyid,
+                                                     armor=False)
+            block.write(encrypted.data)
+        else:
+            json.dump(list(msgs), block)
         block.close()
 
 class SmartServer(Connection):

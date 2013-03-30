@@ -6,7 +6,9 @@ from tuyau.document import Document
 from tuyau.config import Remote, Configuration as Config, GlobalConfig
 from tuyau.conditions import Always, Filter
 from tuyau.actions import LogWithLogging
-from . import DocumentFuzzy, DocumentFuzzy as DF
+from glob import glob
+from . import DocumentFuzzy, DocumentFuzzy as DF, TESTDIR, \
+    TestApplication as Application
 
 def test_dumb_server_1(couchurl, tmpdir):
     log = LogWithLogging('tuyau.test_dumbserver')
@@ -16,9 +18,10 @@ def test_dumb_server_1(couchurl, tmpdir):
                      laptop=Config(),
                      desktop=Config([(Always(), log)]))
 
-    a1 = application.Application('laptop', couchurl)
+    a1 = Application('laptop', couchurl)
     a1.save_config(c)
-    a2 = application.Application('desktop', None, c)
+    a2 = Application('desktop', None, c)
+
 
     m1 = Document()
     a1.save(m1)
@@ -41,11 +44,11 @@ def test_dumb_server_2(couchurl, tmpdir):
                      phone=Config([(Always(), log)]),
                      work_laptop=Config([(Filter(type='mail'), log)]))
 
-    a1 = application.Application('laptop', couchurl)
+    a1 = Application('laptop', couchurl, insecure=True)
     a1.save_config(c)
-    a2 = application.Application('desktop', None, c)
-    a3 = application.Application('phone', None, c)
-    a4 = application.Application('work_laptop', None, c)
+    a2 = Application('desktop', None, c, insecure=True)
+    a3 = Application('phone', None, c, insecure=True)
+    a4 = Application('work_laptop', None, c, insecure=True)
 
 
     m1 = Document()
@@ -77,18 +80,18 @@ def test_many_sync(couchurl, tmpdir):
                      laptop=Config(),
                      desktop=Config([(Always(), log)]))
 
-    a1 = application.Application('laptop', couchurl)
+    a1 = Application('laptop', couchurl)
     a1.save_config(c)
     m1 = Document()
     a1.save(m1)
     a1.sync()
 
-    a2 = application.Application('laptop', couchurl)
+    a2 = Application('laptop', couchurl)
     m2 = Document()
     a2.save(m2)
     a2.sync()
 
-    desktop = application.Application('desktop', couchurl)
+    desktop = Application('desktop', couchurl)
     documents = desktop.fetch()
     assert DF.strip_configs(documents) == [m1, m2]
 
@@ -103,17 +106,40 @@ def test_shared_sync(couchurl, tmpdir):
                      laptop=Config(),
                      desktop=Config([(Always(), log)]))
 
-    a1 = application.Application('laptop', couchurl)
+    a1 = Application('laptop', couchurl)
     a1.save_config(c)
     m1 = Document()
     a1.save(m1)
     # a1 doesn't sync; a2 will sync both
 
-    a2 = application.Application('laptop', couchurl)
+    a2 = Application('laptop', couchurl)
     m2 = Document()
     a2.save(m2)
     a2.sync()
 
-    desktop = application.Application('desktop', couchurl)
+    desktop = Application('desktop', couchurl)
     documents = desktop.fetch()
     assert DF.strip_configs(documents) == [m1, m2]
+
+def test_encryption(couchurl, tmpdir):
+    test_keyring = os.path.join(TESTDIR, 'test_keyring')
+    r = Remote('server', Remote.DUMB, url='ssh://localhost/{}'.format(tmpdir))
+    log = LogWithLogging('tuyau.test_dumbserver')
+    c = GlobalConfig(global_remotes=[r],
+                     laptop=Config(),
+                     desktop=Config([(Always(), log)],
+                                    key_id='0487A9A8'))  # id from test keyring
+
+    # N.B. don't use TestApplication here :)
+    a1 = application.Application('laptop', couchurl, gpg_keyring=test_keyring)
+    a1.save_config(c)
+    d1 = Document()
+    a1.save(d1)
+    a1.sync()
+
+    for filename in glob(str(tmpdir.join('documents-desktop-*'))):
+        assert '_id' not in file(filename).read()  # should be gibberish
+
+    a2 = application.Application('desktop', couchurl, gpg_keyring=test_keyring)
+    documents = a2.fetch()
+    assert DF.strip_configs(documents) == [d1]

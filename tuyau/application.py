@@ -4,6 +4,7 @@ import collections
 import couchdb
 import urlparse
 
+from gnupg import GPG
 from tuyau.config import Remote, GlobalConfig, Configuration
 
 # To debug paramiko
@@ -15,12 +16,23 @@ logger.addHandler(logging.StreamHandler())
 class Application(object):
     """Class for an instance of Tuyau"""
 
-    def __init__(self, name, couchurl, global_config=None):
+    def __init__(self, name, couchurl, global_config=None, gpg_keyring=None,
+                 insecure=False):
         """couchdb is the URL of the Couch DB specific to this instance.
 
         One of couchurl and global_config must be specified."""
         self.name = name
         self.global_config = global_config
+        self.gpg_keyring = gpg_keyring
+        self.gpg = None
+        if gpg_keyring:
+            self.gpg = GPG(gnupghome=self.gpg_keyring)
+            self.gpg.encoding = 'utf-8'
+        else:
+            if not insecure:
+                raise ValueError, "Tuyau must either have a gpg_keyring or "\
+                    "you must accept that it will be insecure"
+
         self.couch = None
         if couchurl:
             parsed = urlparse.urlsplit(couchurl)
@@ -32,7 +44,6 @@ class Application(object):
             self.load_config()
 
         self.incoming = []
-
 
     def load_config(self):
         gc_doc = self.couch.get('_design/tuyau-global', None)

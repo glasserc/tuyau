@@ -7,13 +7,13 @@ from tuyau.document import Document
 from tuyau.config import Remote, Configuration as Config, GlobalConfig
 from tuyau.conditions import Always
 from tuyau.actions import LogWithLogging, SaveToMaildir
-from . import TESTDIR
+from . import TestApplication as Application
 
 def test_always_log(tmpdir):
     log = Mock()
     c = GlobalConfig(desktop=Config([(Always(), log)]))
 
-    a1 = application.Application('desktop', 'http://localhost:5984/tuyau', c)
+    a1 = Application('desktop', 'http://localhost:5984/tuyau', c)
 
     m1 = Document()
     a1.process([m1])
@@ -22,7 +22,7 @@ def test_always_log(tmpdir):
 
 def test_save_maildir(couchurl, tmpdir):
     c = GlobalConfig(desktop=Config([(Always(), SaveToMaildir(str(tmpdir)))]))
-    a1 = application.Application('desktop', couchurl, c)
+    a1 = Application('desktop', couchurl, c)
 
     m1 = Document()
     folder = tmpdir.mkdir('INBOX')

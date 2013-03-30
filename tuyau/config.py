@@ -27,7 +27,7 @@ class Remote(object):
 class Configuration(object):
     """Configuration object for an instance of Tuyau"""
 
-    def __init__(self, listeners=None, remotes=None):
+    def __init__(self, listeners=None, remotes=None, key_id=None):
         self.remotes = remotes or []
         """[remotes]
 
@@ -48,6 +48,10 @@ class Configuration(object):
         named "name". If we are "name" and a document matches a
         condition, perform the corresponding action."""
 
+        self.key_id = key_id
+        """GPG key which should be used to encrypt things to this
+        instance"""
+
     @classmethod
     def from_json(cls, doc):
         doc.pop('type')
@@ -58,7 +62,7 @@ class Configuration(object):
             act = Action.from_json(act)
             listeners.append((cond, act))
 
-        return cls(remotes=remotes, listeners=listeners)
+        return cls(remotes=remotes, listeners=listeners, key_id=doc['key_id'])
 
     def to_json(self):
         conds_stanza = ''
@@ -75,6 +79,7 @@ class Configuration(object):
         return {'remotes': [r.to_json() for r in self.remotes],
                 'listeners': [(c.to_json(), a.to_json())
                               for (c, a) in self.listeners],
+                'key_id': self.key_id,
                 'filters': {
                 'interested': interested,
                 },
