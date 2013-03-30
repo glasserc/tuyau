@@ -1,0 +1,11 @@
+CouchDB==0.8
+argparse==1.2.1
+distribute==0.6.24
+ecdsa==0.8
+mock==1.0.1
+-e git+git@github.com:glasserc/paramiko.git@ebdbfae5b1fd069f53c13b830fcf737b279977b7#egg=paramiko-dev
+py==1.4.13
+pycrypto==2.6
+pytest==2.3.4
+python-gnupg==0.3.3
+wsgiref==0.1.2
